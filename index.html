@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>File Clanker</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎬</text></svg>">
+
+<!-- Video.js CDN -->
+<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" crossorigin="anonymous">
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js" crossorigin="anonymous"></script>
+
+<style>
+:root{
+  --bg:#08101d;
+  --surface:rgba(14,23,37,.88);
+  --surface2:rgba(24,38,58,.96);
+  --text:#f1f7ff;
+  --accent:#66d4ff;
+  --accent2:#9ee7ff;
+  --muted:#a9b8c9;
+  --border:rgba(255,255,255,.16);
+  --shadow:0 18px 50px rgba(0,0,0,.28);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  min-height:100%;
+  margin:0;
+}
+
+body{
+  color:var(--text);
+  font-family:"Segoe UI",Tahoma,sans-serif;
+  font-size:16px;
+  background-image:
+    linear-gradient(rgba(4,7,14,.35),rgba(4,7,14,.65)),
+    var(--bg);
+  background-attachment:fixed;
+}
+
+body.theme-space{
+  --accent:#8bd8ff;
+  --accent2:#b4e8ff;
+  --bg:#050711;
+  background-image:
+    linear-gradient(rgba(3,5,13,.30),rgba(3,5,13,.58)),
+    url("{{ url_for('static', filename='themes/space.png') }}"),
+    radial-gradient(circle at 20% 10%,#233d8a,#050711 45%);
+}
+
+body.theme-femboy{
+  --accent:#ff8bd1;
+  --accent2:#ffb5e5;
+  --bg:#180b18;
+  background-image:
+    linear-gradient(rgba(18,5,17,.30),rgba(18,5,17,.62)),
+    url("{{ url_for('static', filename='themes/femboy.png') }}"),
+    radial-gradient(circle at 20% 10%,#ff76c8,#180b18 48%);
+}
+
+body.theme-neon{
+  --accent:#66ff9c;
+  --accent2:#9affbd;
+  --bg:#050b0a;
+  background-image:
+    linear-gradient(rgba(2,10,6,.35),rgba(2,10,6,.65)),
+    url("{{ url_for('static', filename='themes/neon.png') }}"),
+    radial-gradient(circle at 20% 10%,#0d7c46,#050b0a 50%);
+}
+
+body.theme-rose{
+  --accent:#ff83bd;
+  --accent2:#ffb0d7;
+  --bg:#180b14;
+  background-image:
+    linear-gradient(rgba(18,4,13,.35),rgba(18,4,13,.65)),
+    url("{{ url_for('static', filename='themes/rose.png') }}"),
+    radial-gradient(circle at 20% 10%,#8f205d,#180b14 50%);
+}
+
+body.theme-ocean{
+  --accent:#4de3ff;
+  --accent2:#9cf2ff;
+  --bg:#04121b;
+  background-image:
+    linear-gradient(rgba(2,12,19,.30),rgba(2,12,19,.67)),
+    url("{{ url_for('static', filename='themes/ocean.png') }}"),
+    radial-gradient(circle at 20% 10%,#126b8b,#04121b 50%);
+}
+
+body.theme-sunset{
+  --accent:#ff9b63;
+  --accent2:#ffc08f;
+  --bg:#1a0c09;
+  background-image:
+    linear-gradient(rgba(20,5,2,.30),rgba(20,5,2,.68)),
+    url("{{ url_for('static', filename='themes/sunset.png') }}"),
+    radial-gradient(circle at 20% 10%,#b94320,#1a0c09 50%);
+}
+
+body.theme-cyber{
+  --accent:#b66cff;
+  --accent2:#d3aaff;
+  --bg:#0c0616;
+  background-image:
+    linear-gradient(rgba(8,2,16,.32),rgba(8,2,16,.68)),
+    url("{{ url_for('static', filename='themes/cyber.png') }}"),
+    radial-gradient(circle at 20% 10%,#6422b0,#0c0616 50%);
+}
+
+.page{
+  width:min(1200px,calc(100% - 28px));
+  margin:auto;
+  padding:24px 0 50px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  margin-bottom:22px;
+}
+
+.brand-title{
+  color:var(--accent);
+  font-size:clamp(1.7rem,4vw,2.3rem);
+  font-weight:900;
+  letter-spacing:-.04em;
+  text-shadow:0 0 25px color-mix(in srgb,var(--accent) 35%,transparent);
+}
+
+.brand-subtitle{
+  color:var(--muted);
+  margin-top:3px;
+}
+
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.theme-box{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:9px 12px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--surface);
+  backdrop-filter:blur(14px);
+}
+
+.theme-box label{
+  color:var(--muted);
+  font-size:.76rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+
+select,input{
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  border-radius:13px;
+  padding:11px 13px;
+  outline:none;
+}
+
+select:focus,input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent);
+}
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:20px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(18px);
+  margin-bottom:18px;
+}
+
+.search{
+  display:grid;
+  grid-template-columns:minmax(200px,2fr) repeat(4,minmax(120px,1fr)) auto;
+  gap:10px;
+}
+
+.search button{
+  border:0;
+  border-radius:13px;
+  padding:11px 18px;
+  background:var(--accent);
+  color:#071421;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.search button:hover{
+  background:var(--accent2);
+}
+
+.breadcrumbs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:10px 2px 18px;
+  color:var(--muted);
+}
+
+.breadcrumbs a{
+  color:var(--accent);
+  text-decoration:none;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.stat{
+  padding:16px;
+  border-radius:18px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+
+.stat-value{
+  margin-top:5px;
+  color:var(--accent);
+  font-size:1.35rem;
+  font-weight:900;
+}
+
+.dashboard-title{
+  font-size:1.05rem;
+  font-weight:850;
+  color:var(--accent);
+  margin-bottom:14px;
+}
+
+.dashboard-folders{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+  gap:12px;
+}
+
+.folder-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px;
+  color:var(--text);
+  text-decoration:none;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  transition:.16s ease;
+}
+
+.folder-card:hover{
+  transform:translateY(-2px);
+  background:var(--surface2);
+  border-color:color-mix(in srgb,var(--accent) 35%,var(--border));
+}
+
+.folder-card-icon{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--accent) 12%,transparent);
+  font-size:21px;
+}
+
+.folder-card-name{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-weight:750;
+}
+
+.folder-card-sub{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:.8rem;
+}
+
+.file-list{
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+
+.list-head,
+.file-row{
+  display:grid;
+  grid-template-columns:54px minmax(220px,1fr) 100px 130px 220px;
+  gap:12px;
+  align-items:center;
+  padding:15px 17px;
+}
+
+.list-head{
+  color:var(--muted);
+  background:rgba(255,255,255,.045);
+  font-size:.76rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+
+.file-row{
+  position:relative;
+  background:var(--surface);
+  border-top:1px solid rgba(255,255,255,.06);
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.file-row:hover,
+.file-row:focus{
+  outline:none;
+  background:var(--surface2);
+  transform:translateY(-1px);
+}
+
+.file-row:hover .name-main,
+.file-row:focus .name-main,
+.file-row:hover .meta,
+.file-row:focus .meta{
+  color:var(--text);
+}
+
+.file-row.lazy-hidden{
+  display:none;
+}
+
+.icon{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--accent) 12%,transparent);
+  font-size:20px;
+}
+
+.name{
+  min-width:0;
+  font-weight:750;
+}
+
+.name-main{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.name-sub{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:.82rem;
+}
+
+.meta{
+  color:var(--muted);
+  font-size:.86rem;
+}
+
+.actions{
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.action{
+  border:0;
+  border-radius:11px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.065);
+  color:var(--accent);
+  text-decoration:none;
+  cursor:pointer;
+  font-size:.82rem;
+}
+
+.action:hover{
+  background:rgba(255,255,255,.13);
+}
+
+.star{
+  color:#ffd966;
+  font-size:17px;
+}
+
+.lazy-more{
+  display:none;
+  width:100%;
+  margin-top:14px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+  color:var(--accent);
+  font-weight:800;
+  cursor:pointer;
+}
+
+.empty{
+  padding:45px 20px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.error{
+  padding:14px 17px;
+  margin-bottom:18px;
+  border:1px solid rgba(255,80,100,.3);
+  border-radius:15px;
+  color:#ffd8df;
+  background:rgba(160,30,50,.22);
+}
+
+.preview{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  place-items:center;
+  padding:18px;
+  background:rgba(0,0,0,.82);
+  backdrop-filter:blur(12px);
+}
+
+.preview.open{
+  display:grid;
+}
+
+.preview-box{
+  width:min(1100px,100%);
+  max-height:94vh;
+  overflow:auto;
+  padding:18px;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:var(--surface2);
+  box-shadow:0 35px 100px rgba(0,0,0,.55);
+}
+
+.preview-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.preview-title{
+  color:var(--accent);
+  font-weight:800;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.close{
+  cursor:pointer;
+  font-size:23px;
+  padding:5px 10px;
+}
+
+.preview-media img,
+.preview-media video{
+  display:block;
+  width:100%;
+  max-height:75vh;
+  object-fit:contain;
+  border-radius:16px;
+  background:#000;
+}
+
+.preview-media audio{
+  width:100%;
+}
+
+.preview-nav{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:12px;
+}
+
+.profile-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.profile-label{
+  color:var(--muted);
+  font-size:.8rem;
+}
+
+.profile-button{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:7px 10px;
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  cursor:pointer;
+}
+
+.profile-button.active{
+  color:#071421;
+  background:var(--accent);
+}
+
+.hls-note{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:.76rem;
+}
+
+.track-controls{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  padding:12px 0;
+  border-top:1px solid rgba(255,255,255,.09);
+}
+
+.track-label{
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:600;
+}
+
+.track-selector{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px 9px;
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  font-size:.8rem;
+  cursor:pointer;
+  outline:none;
+}
+
+.track-selector:hover,
+.track-selector:focus{
+  background:rgba(255,255,255,.12);
+  border-color:var(--accent);
+}
+
+.track-selector option{
+  background:#ffffff;
+  color:#111827;
+}
+
+.video-js{
+  border-radius:14px;
+  overflow:hidden;
+}
+
+@media(max-width:1050px){
+  .search{
+    grid-template-columns:1fr 1fr 1fr;
+  }
+
+  .search input:first-child{
+    grid-column:1/-1;
+  }
+
+  .list-head,
+  .file-row{
+    grid-template-columns:48px minmax(160px,1fr) 90px 170px;
+  }
+
+  .list-head>div:nth-child(3),
+  .file-row>.meta:nth-of-type(1){
+    display:none;
+  }
+}
+
+@media(max-width:650px){
+  .page{
+    width:min(100% - 18px,1200px);
+  }
+
+  .topbar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .controls{
+    width:100%;
+  }
+
+  .theme-box{
+    flex:1;
+  }
+
+  .theme-box select{
+    flex:1;
+  }
+
+  .search{
+    grid-template-columns:1fr;
+  }
+
+  .search input:first-child{
+    grid-column:auto;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .list-head{
+    display:none;
+  }
+
+  .file-row{
+    grid-template-columns:45px 1fr;
+    padding:13px;
+  }
+
+  .actions{
+    grid-column:1/-1;
+    justify-content:flex-start;
+  }
+
+  .meta{
+    display:none;
+  }
+
+  .dashboard-folders{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+<header class="topbar">
+  <div>
+    <div class="brand-title">File Clanker</div>
+    <div class="brand-subtitle">IDK We was board.</div>
+  </div>
+
+  <div class="controls">
+    <div class="theme-box">
+      <label for="theme">Theme</label>
+
+      <select id="theme">
+        <option value="dark">Blue</option>
+        <option value="space">Space</option>
+        <option value="femboy">Femboy</option>
+        <option value="neon">Neon</option>
+        <option value="rose">Rose</option>
+        <option value="ocean">Ocean</option>
+        <option value="sunset">Sunset</option>
+        <option value="cyber">Cyber</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+{% if error %}
+<div class="error">
+  {{ error }}
+</div>
+{% endif %}
+
+{% if dashboard %}
+
+<section class="stats">
+
+  <div class="stat">
+    <div class="stat-label">Files</div>
+    <div class="stat-value">
+      {{ stats.files }}
+    </div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Folders</div>
+    <div class="stat-value">
+      {{ stats.directories }}
+    </div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Storage</div>
+    <div class="stat-value">
+      {{ stats.size_text }}
+    </div>
+  </div>
+
+</section>
+
+<section class="panel">
+
+  <form class="search" method="get" action="/browse/">
+
+    <input
+      type="text"
+      name="q"
+      placeholder="Search files..."
+    >
+
+    <select name="kind">
+      <option value="all">Everything</option>
+      <option value="dir">Folders</option>
+      <option value="file">Files</option>
+      <option value="video">Video</option>
+      <option value="audio">Audio</option>
+      <option value="image">Images</option>
+      <option value="archive">Archives</option>
+    </select>
+
+    <select name="sort">
+      <option value="episode">Episode order</option>
+      <option value="season">Season / Episode</option>
+      <option value="name">Name</option>
+      <option value="size">Size</option>
+      <option value="type">Type</option>
+      <option value="extension">Extension</option>
+    </select>
+
+    <select name="order">
+      <option value="asc">Ascending</option>
+      <option value="desc">Descending</option>
+    </select>
+
+    <button type="submit">
+      Search
+    </button>
+
+  </form>
+
+</section>
+
+<section class="panel">
+
+  <div class="dashboard-title">
+    📁 Folders
+  </div>
+
+  {% if folders %}
+
+  <div class="dashboard-folders">
+
+    {% for folder in folders %}
+
+    <a
+      class="folder-card"
+      href="{{ folder.browse_url }}"
+    >
+
+      <div class="folder-card-icon">
+        📁
+      </div>
+
+      <div>
+        <div class="folder-card-name">
+          {{ folder.name }}
+        </div>
+
+        <div class="folder-card-sub">
+          {{ folder.size_text }}
+        </div>
+      </div>
+
+    </a>
+
+    {% endfor %}
+
+  </div>
+
+  {% else %}
+
+  <div class="empty">
+    No folders yet.
+  </div>
+
+  {% endif %}
+
+</section>
+
+{% else %}
+
+<section class="stats">
+
+  <div class="stat">
+    <div class="stat-label">Files</div>
+    <div class="stat-value">
+      {{ stats.files }}
+    </div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Folders</div>
+    <div class="stat-value">
+      {{ stats.directories }}
+    </div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Size</div>
+    <div class="stat-value">
+      {{ stats.size_text }}
+    </div>
+  </div>
+
+</section>
+
+<section class="panel">
+
+  <form class="search" method="get">
+
+    <input
+      type="text"
+      name="q"
+      value="{{ q }}"
+      placeholder="Search files..."
+    >
+
+    <select name="kind">
+
+      <option value="all"
+        {% if kind == "all" %}selected{% endif %}
+      >
+        Everything
+      </option>
+
+      <option value="dir"
+        {% if kind == "dir" %}selected{% endif %}
+      >
+        Folders
+      </option>
+
+      <option value="file"
+        {% if kind == "file" %}selected{% endif %}
+      >
+        Files
+      </option>
+
+      <option value="video"
+        {% if kind == "video" %}selected{% endif %}
+      >
+        Video
+      </option>
+
+      <option value="audio"
+        {% if kind == "audio" %}selected{% endif %}
+      >
+        Audio
+      </option>
+
+      <option value="image"
+        {% if kind == "image" %}selected{% endif %}
+      >
+        Images
+      </option>
+
+      <option value="archive"
+        {% if kind == "archive" %}selected{% endif %}
+      >
+        Archives
+      </option>
+
+    </select>
+
+    <select name="sort">
+
+      <option value="episode"
+        {% if sort == "episode" %}selected{% endif %}
+      >
+        Episode order
+      </option>
+
+      <option value="season"
+        {% if sort == "season" %}selected{% endif %}
+      >
+        Season / Episode
+      </option>
+
+      <option value="name"
+        {% if sort == "name" %}selected{% endif %}
+      >
+        Name
+      </option>
+
+      <option value="size"
+        {% if sort == "size" %}selected{% endif %}
+      >
+        Size
+      </option>
+
+      <option value="type"
+        {% if sort == "type" %}selected{% endif %}
+      >
+        Type
+      </option>
+
+      <option value="extension"
+        {% if sort == "extension" %}selected{% endif %}
+      >
+        Extension
+      </option>
+
+    </select>
+
+    <select name="order">
+
+      <option value="asc"
+        {% if order == "asc" %}selected{% endif %}
+      >
+        Ascending
+      </option>
+
+      <option value="desc"
+        {% if order == "desc" %}selected{% endif %}
+      >
+        Descending
+      </option>
+
+    </select>
+
+    <input
+      type="hidden"
+      name="path"
+      value="{{ path }}"
+    >
+
+    <button type="submit">
+      Apply
+    </button>
+
+  </form>
+
+</section>
+
+<nav class="breadcrumbs">
+
+  <a href="/">
+    root
+  </a>
+
+  {% for crumb in crumbs %}
+
+    <span>/</span>
+
+    <a href="{{ url_for('index', req_path=crumb.path) }}">
+      {{ crumb.name }}
+    </a>
+
+  {% endfor %}
+
+</nav>
+
+<section class="file-list">
+
+  <div class="list-head">
+    <div></div>
+    <div>Name</div>
+    <div>Type</div>
+    <div>Size</div>
+    <div>Actions</div>
+  </div>
+
+  {% if not items %}
+
+  <div class="empty">
+    Nothing here.
+  </div>
+
+  {% endif %}
+
+  {% for item in items %}
+
+  <div
+    class="file-row"
+    tabindex="0"
+    data-url="{{ (item.browse_url or item.preview_url or item.download_url or '')|e }}"
+    data-preview-url="{{ (item.preview_url or '')|e }}"
+    data-kind="{{ item.kind }}"
+    data-type="{{ item.type }}"
+    data-name="{{ item.name|e }}"
+    data-path="{{ item.fullpath|e }}"
+    onclick="openItem(this)"
+  >
+
+    <div class="icon">
+
+      {% if item.type == "dir" %}
+        📁
+
+      {% elif item.kind == "video" %}
+        🎬
+
+      {% elif item.kind == "audio" %}
+        🎧
+
+      {% elif item.kind == "image" %}
+        🖼️
+
+      {% elif item.kind == "archive" %}
+        📦
+
+      {% else %}
+        📄
+
+      {% endif %}
+
+    </div>
+
+    <div class="name">
+
+      <div class="name-main">
+        {{ item.name }}{% if item.type == "dir" %}/{% endif %}
+      </div>
+
+      <div class="name-sub">
+
+        {% if item.type == "dir" %}
+
+          Folder
+
+        {% elif item.kind == "audio" %}
+
+          Music
+
+        {% elif item.season is not none or item.episode is not none %}
+
+          {% if item.season is not none %}
+            S{{ item.season }}
+          {% endif %}
+
+          {% if item.episode is not none %}
+            · Episode {{ item.episode }}
+          {% endif %}
+
+        {% else %}
+
+          {{ item.kind|capitalize }}
+
+        {% endif %}
+
+      </div>
+
+    </div>
+
+    <div class="meta">
+      {{ item.kind|capitalize }}
+    </div>
+
+    <div class="meta">
+      {{ item.size_text }}
+    </div>
+
+    <div class="actions">
+
+      {% if item.type == "dir" %}
+
+        <a
+          class="action"
+          href="{{ item.browse_url }}"
+          onclick="event.stopPropagation()"
+        >
+          Open
+        </a>
+
+        <a
+          class="action"
+          href="{{ item.zip_url }}"
+          onclick="event.stopPropagation()"
+        >
+          ZIP
+        </a>
+
+      {% else %}
+
+        {% if item.preview_url %}
+
+          <button
+            class="action"
+            type="button"
+            onclick="event.stopPropagation();showPreview(this.closest('.file-row'))"
+          >
+            Preview
+          </button>
+
+        {% endif %}
+
+        <a
+          class="action"
+          href="{{ item.download_url }}"
+          onclick="event.stopPropagation()"
+        >
+          Download
+        </a>
+
+      {% endif %}
+
+      <button
+        class="action star"
+        type="button"
+        onclick="event.stopPropagation();toggleStar(this)"
+        title="Pin"
+      >☆</button>
+
+    </div>
+
+  </div>
+
+  {% endfor %}
+
+</section>
+
+<button
+  class="lazy-more"
+  id="lazyMore"
+  type="button"
+>
+  Show more
+</button>
+
+{% endif %}
+
+</div>
+
+<div class="preview" id="preview">
+
+  <div class="preview-box">
+
+    <div class="preview-head">
+
+      <div
+        class="preview-title"
+        id="previewTitle"
+      >
+        Preview
+      </div>
+
+      <div
+        class="close"
+        onclick="closePreview()"
+      >
+        ✕
+      </div>
+
+    </div>
+
+    <div
+      class="preview-media"
+      id="previewMedia"
+    ></div>
+
+    <div
+      class="profile-bar"
+      id="profileBar"
+      style="display:none"
+    >
+
+      <span class="profile-label">
+        Video quality:
+      </span>
+
+      <button
+        class="profile-button active"
+        data-profile="original"
+        onclick="changeProfile('original')"
+      >
+        Original
+      </button>
+
+      <button
+        class="profile-button"
+        data-profile="1080"
+        onclick="changeProfile('1080')"
+      >
+        1080p
+      </button>
+
+      <button
+        class="profile-button"
+        data-profile="720"
+        onclick="changeProfile('720')"
+      >
+        720p
+      </button>
+
+      <button
+        class="profile-button"
+        data-profile="480"
+        onclick="changeProfile('480')"
+      >
+        480p
+      </button>
+
+    </div>
+
+    <div
+      class="track-controls"
+      id="trackControls"
+      style="display:none"
+    >
+
+      <select
+        class="track-selector"
+        id="audioTrackSelect"
+        onchange="selectAudioTrack(this.value)"
+      >
+        <option value="">🔊 Default Audio</option>
+      </select>
+
+      <select
+        class="track-selector"
+        id="subtitleTrackSelect"
+        onchange="selectSubtitleTrack(this.value)"
+      >
+        <option value="">📝 No Subtitles</option>
+      </select>
+
+    </div>
+
+    <div
+      class="hls-note"
+      id="hlsNote"
+      style="display:none"
+    >
+      Lower quality modes use FFmpeg and may take a moment to prepare.
+    </div>
+
+    <div class="preview-nav">
+
+      <button
+        class="action"
+        onclick="previousMedia()"
+      >
+        ← Previous
+      </button>
+
+      <button
+        class="action"
+        onclick="nextMedia()"
+      >
+        Next →
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const themePicker =
+  document.getElementById("theme");
+
+const themes = [
+  "dark",
+  "space",
+  "femboy",
+  "neon",
+  "rose",
+  "ocean",
+  "sunset",
+  "cyber"
+];
+
+function setTheme(theme){
+
+  if(!themes.includes(theme)){
+    theme = "dark";
+  }
+
+  document.body.className =
+    "theme-" + theme;
+
+  localStorage.setItem(
+    "fileclanker-theme",
+    theme
+  );
+
+  themePicker.value = theme;
+}
+
+themePicker.addEventListener(
+  "change",
+  function(){
+    setTheme(this.value);
+  }
+);
+
+function loadTheme(){
+
+  const saved =
+    localStorage.getItem(
+      "fileclanker-theme"
+    );
+
+  setTheme(
+    saved && themes.includes(saved)
+      ? saved
+      : "dark"
+  );
+}
+
+function openItem(row){
+
+  if(!row) return;
+
+  const type =
+    row.dataset.type;
+
+  const url =
+    row.dataset.url;
+
+  if(!url) return;
+
+  if(type === "dir"){
+    window.location.href = url;
+    return;
+  }
+
+  if(row.dataset.previewUrl){
+    showPreview(row);
+    return;
+  }
+
+  window.location.href = url;
+}
+
+let currentRow = null;
+let currentProfile = "original";
+let currentPlayer = null;
+let currentAudioStream = null;
+let currentSubtitleStream = null;
+let currentPlayerRequestId = 0;
+
+function mediaRows(){
+
+  return [
+    ...document.querySelectorAll(
+      ".file-row"
+    )
+  ].filter(row =>
+    row.dataset.previewUrl &&
+    [
+      "video",
+      "audio",
+      "image"
+    ].includes(row.dataset.kind)
+  );
+}
+
+function showPreview(row){
+
+  if(!row) return;
+
+  currentRow = row;
+  currentProfile = "original";
+  currentAudioStream = null;
+  currentSubtitleStream = null;
+
+  const url =
+    row.dataset.previewUrl;
+
+  const kind =
+    row.dataset.kind;
+
+  const title =
+    row.dataset.name;
+
+  const modal =
+    document.getElementById("preview");
+
+  const media =
+    document.getElementById("previewMedia");
+
+  const previewTitle =
+    document.getElementById("previewTitle");
+
+  const profileBar =
+    document.getElementById("profileBar");
+
+  const trackControls =
+    document.getElementById("trackControls");
+
+  const hlsNote =
+    document.getElementById("hlsNote");
+
+  media.innerHTML = "";
+
+  previewTitle.textContent =
+    title;
+
+  profileBar.style.display =
+    kind === "video"
+      ? "flex"
+      : "none";
+
+  trackControls.style.display =
+    kind === "video"
+      ? "flex"
+      : "none";
+
+  hlsNote.style.display =
+    "none";
+
+  resetProfileButtons();
+
+  if(kind === "video"){
+
+    const videoElement = document.createElement("video");
+    videoElement.id = "videoPlayer";
+    videoElement.className = "video-js vjs-default-skin";
+    videoElement.controls = true;
+    videoElement.preload = "metadata";
+    videoElement.width = 100;
+    videoElement.style.height = "auto";
+    media.appendChild(videoElement);
+
+    setTimeout(() => {
+      loadVideoWithPlayer(url, "original");
+      fetchVideoTracks(currentRow.dataset.path);
+    }, 200);
+  }
+
+  else if(kind === "audio"){
+
+    const audio =
+      document.createElement("audio");
+
+    audio.controls = true;
+    audio.autoplay = false;
+    audio.preload = "metadata";
+    audio.style.width = "100%";
+    audio.src = url;
+
+    media.appendChild(audio);
+  }
+
+  else if(kind === "image"){
+
+    const image =
+      document.createElement("img");
+
+    image.src = url;
+    image.alt = title;
+
+    media.appendChild(image);
+  }
+
+  modal.classList.add("open");
+}
+
+function loadVideoWithPlayer(url, profile, audioStream = null, subtitleStream = null){
+
+  const playerRequestId = ++currentPlayerRequestId;
+
+  if(currentPlayer){
+    try{
+      currentPlayer.dispose();
+    }catch(e){}
+  }
+
+  let videoElement =
+    document.getElementById("videoPlayer");
+
+  if(!videoElement){
+    videoElement = document.createElement("video");
+    videoElement.id = "videoPlayer";
+    videoElement.className = "video-js vjs-default-skin";
+    videoElement.controls = true;
+    videoElement.preload = "metadata";
+    videoElement.width = 100;
+    videoElement.style.height = "auto";
+    document.getElementById("previewMedia").appendChild(videoElement);
+  }
+
+  try{
+    currentPlayer =
+      videojs("videoPlayer", {
+        controls: true,
+        autoplay: false,
+        preload: "metadata",
+        fluid: true
+      });
+  }catch(err){
+    console.error("Video.js init:", err);
+    return;
+  }
+
+  const params = new URLSearchParams();
+  if(profile !== "original"){
+    params.set("profile", profile);
+  }
+  if(audioStream !== null && audioStream !== ""){
+    params.set("audio", audioStream);
+  }
+
+  const filePath = currentRow ? currentRow.dataset.path : "";
+  const useHls = false;
+  if(useHls){
+    params.set("profile", profile === "original" ? "original" : profile);
+  }
+
+  const query = params.toString();
+  const sourceUrl = useHls
+    ? `/hls/${encodeURIComponent(filePath)}/?${query}`
+    : (query ? `${url}?${query}` : url);
+  const sourceType = useHls ? "application/x-mpegURL" : "video/mp4";
+
+  try{
+    if(useHls){
+      const attachSource = () => {
+        fetch(sourceUrl)
+          .then(response => response.ok ? response.text() : "")
+          .then(text => {
+            if(
+              currentPlayerRequestId === playerRequestId &&
+              text.includes("#EXTM3U")
+            ){
+              currentPlayer.src({src: sourceUrl, type: sourceType});
+            }else if(currentPlayerRequestId === playerRequestId){
+              setTimeout(attachSource, 500);
+            }
+          })
+          .catch(() => {
+            if(currentPlayerRequestId === playerRequestId){
+              setTimeout(attachSource, 500);
+            }
+          });
+      };
+      attachSource();
+    }else{
+      currentPlayer.src({src: sourceUrl, type: sourceType});
+    }
+  }catch(err){
+    console.error("Playback error:", err);
+  }
+
+  if(subtitleStream !== null && subtitleStream !== "" && currentRow){
+    currentPlayer.addRemoteTextTrack({
+      kind: "subtitles",
+      src: `/subtitle/${encodeURIComponent(currentRow.dataset.path)}/${subtitleStream}.vtt`,
+      srclang: "und",
+      label: "Selected subtitle",
+      default: true
+    }, false);
+  }
+
+}
+
+function populateAudioTracks(player){
+
+  const select =
+    document.getElementById(
+      "audioTrackSelect"
+    );
+
+  if(!select || !player.audioTracks)
+    return;
+
+  const tracks =
+    player.audioTracks();
+
+  select.innerHTML =
+    '<option value="">🔊 Default Audio</option>';
+
+  for(let i = 0; i < tracks.length; i++){
+
+    const track = tracks[i];
+    const option =
+      document.createElement("option");
+
+    option.value = i;
+    option.textContent =
+      track.label ||
+      `Audio Track ${i + 1}`;
+
+    select.appendChild(option);
+  }
+}
+
+function fetchVideoTracks(filePath){
+  // Fetch track information from server API
+
+  if(!filePath) return;
+
+  const apiUrl =
+    `/api/tracks/${encodeURIComponent(filePath)}`;
+
+  fetch(apiUrl)
+    .then(response => {
+      if(!response.ok) return;
+      return response.json();
+    })
+    .then(data => {
+      if(!data) return;
+
+      const audioSelect =
+        document.getElementById(
+          "audioTrackSelect"
+        );
+
+      const subtitleSelect =
+        document.getElementById(
+          "subtitleTrackSelect"
+        );
+
+      if(data.audio && data.audio.length > 0 && audioSelect){
+
+        audioSelect.innerHTML =
+          '<option value="">🔊 Default Audio</option>';
+
+        data.audio.forEach((track) => {
+          const option =
+            document.createElement("option");
+          option.value = track.stream_index;
+          option.textContent = track.label || `Audio ${track.index}`;
+          audioSelect.appendChild(option);
+        });
+
+        if(data.default_audio_index !== null){
+          const defaultTrack = data.audio[data.default_audio_index];
+          if(defaultTrack){
+            audioSelect.value = String(defaultTrack.stream_index);
+            selectAudioTrack(defaultTrack.stream_index);
+          }
+        }
+      }
+
+      if(data.subtitles && data.subtitles.length > 0 && subtitleSelect){
+
+        subtitleSelect.innerHTML =
+          '<option value="">📝 No Subtitles</option>';
+
+        data.subtitles.forEach((track) => {
+          const option =
+            document.createElement("option");
+          option.value = track.stream_index;
+          option.textContent = track.label || `Subtitle ${track.index}`;
+          subtitleSelect.appendChild(option);
+        });
+      }
+    })
+    .catch(err => {
+      console.log("Track info unavailable");
+    });
+}
+
+function populateSubtitleTracks(player){
+
+  const select =
+    document.getElementById(
+      "subtitleTrackSelect"
+    );
+
+  if(!select || !player.textTracks)
+    return;
+
+  const tracks =
+    player.textTracks();
+
+  select.innerHTML =
+    '<option value="">📝 No Subtitles</option>';
+
+  for(let i = 0; i < tracks.length; i++){
+
+    const track = tracks[i];
+
+    if(
+      track.kind === "subtitles" ||
+      track.kind === "captions"
+    ){
+
+      const option =
+        document.createElement("option");
+
+      option.value = i;
+      option.textContent =
+        track.label ||
+        `${track.kind} ${i + 1}`;
+
+      select.appendChild(option);
+    }
+  }
+}
+
+function selectAudioTrack(index){
+
+  if(!index || index === ""){
+    currentAudioStream = null;
+  }else{
+    currentAudioStream = parseInt(index);
+  }
+
+  if(currentRow){
+    loadVideoWithPlayer(
+      currentRow.dataset.previewUrl,
+      currentProfile,
+      currentAudioStream,
+      currentSubtitleStream
+    );
+  }
+}
+
+function selectSubtitleTrack(index){
+
+  if(!index || index === ""){
+    currentSubtitleStream = null;
+  }else{
+    currentSubtitleStream = parseInt(index);
+  }
+
+  if(currentRow){
+    loadVideoWithPlayer(
+      currentRow.dataset.previewUrl,
+      currentProfile,
+      currentAudioStream,
+      currentSubtitleStream
+    );
+  }
+}
+
+function resetProfileButtons(){
+
+  document
+    .querySelectorAll(".profile-button")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.profile === "original"
+      );
+
+    });
+}
+
+function changeProfile(profile){
+
+  if(!currentRow) return;
+
+  const kind =
+    currentRow.dataset.kind;
+
+  if(kind !== "video") return;
+
+  currentProfile = profile;
+
+  document
+    .querySelectorAll(".profile-button")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.profile === profile
+      );
+
+    });
+
+  const url =
+    currentRow.dataset.previewUrl;
+
+  const note =
+    document.getElementById(
+      "hlsNote"
+    );
+
+  if(profile === "original"){
+    note.style.display = "none";
+  } else {
+    note.style.display = "block";
+  }
+
+  loadVideoWithPlayer(url, profile);
+}
+
+function closePreview(){
+
+  if(currentPlayer){
+    try{
+      currentPlayer.dispose();
+    }catch(err){
+      console.warn("Player cleanup failed", err);
+    }
+    currentPlayer = null;
+  }
+
+  const modal =
+    document.getElementById(
+      "preview"
+    );
+
+  modal.classList.remove("open");
+
+  document.getElementById(
+    "previewMedia"
+  ).innerHTML = "";
+
+  document.getElementById(
+    "audioTrackSelect"
+  ).innerHTML =
+    '<option value="">🔊 Default Audio</option>';
+
+  document.getElementById(
+    "subtitleTrackSelect"
+  ).innerHTML =
+    '<option value="">📝 No Subtitles</option>';
+
+  currentRow = null;
+}
+
+function nextMedia(){
+
+  const rows =
+    mediaRows();
+
+  if(!currentRow || !rows.length)
+    return;
+
+  const index =
+    rows.indexOf(currentRow);
+
+  if(
+    index >= 0 &&
+    index < rows.length - 1
+  ){
+    showPreview(
+      rows[index + 1]
+    );
+  }
+}
+
+function previousMedia(){
+
+  const rows =
+    mediaRows();
+
+  if(!currentRow || !rows.length)
+    return;
+
+  const index =
+    rows.indexOf(currentRow);
+
+  if(index > 0){
+    showPreview(
+      rows[index - 1]
+    );
+  }
+}
+
+function toggleStar(button){
+
+  const row =
+    button.closest(".file-row");
+
+  if(!row) return;
+
+  const key =
+    "fileclanker-stars";
+
+  let saved;
+
+  try{
+
+    saved = JSON.parse(
+      localStorage.getItem(key) || "[]"
+    );
+
+  }catch{
+
+    saved = [];
+
+  }
+
+  const path =
+    row.dataset.path ||
+    row.dataset.name;
+
+  const index =
+    saved.indexOf(path);
+
+  if(index === -1){
+
+    saved.push(path);
+    button.textContent = "★";
+
+  }else{
+
+    saved.splice(index,1);
+    button.textContent = "☆";
+
+  }
+
+  localStorage.setItem(
+    key,
+    JSON.stringify(saved)
+  );
+}
+
+function restoreStars(){
+
+  let saved;
+
+  try{
+
+    saved = JSON.parse(
+      localStorage.getItem(
+        "fileclanker-stars"
+      ) || "[]"
+    );
+
+  }catch{
+
+    saved = [];
+
+  }
+
+  document
+    .querySelectorAll(".file-row")
+    .forEach(row => {
+
+      const button =
+        row.querySelector(".star");
+
+      if(!button) return;
+
+      const path =
+        row.dataset.path ||
+        row.dataset.name;
+
+      if(saved.includes(path)){
+        button.textContent = "★";
+      }
+
+    });
+}
+
+function setupLazyLoading(){
+
+  const rows = [
+    ...document.querySelectorAll(
+      ".file-row"
+    )
+  ];
+
+  const button =
+    document.getElementById(
+      "lazyMore"
+    );
+
+  if(!button || rows.length <= 100){
+    if(button){
+      button.style.display = "none";
+    }
+
+    return;
+  }
+
+  let visible = 100;
+
+  function update(){
+
+    rows.forEach(
+      (row,index) => {
+
+        row.classList.toggle(
+          "lazy-hidden",
+          index >= visible
+        );
+
+      }
+    );
+
+    button.style.display =
+      visible < rows.length
+        ? "block"
+        : "none";
+
+    button.textContent =
+      visible < rows.length
+        ? `Show more (${Math.min(
+            100,
+            rows.length - visible
+          )})`
+        : "";
+  }
+
+  button.addEventListener(
+    "click",
+    function(){
+
+      visible += 100;
+      update();
+
+    }
+  );
+
+  update();
+}
+
+document.addEventListener(
+  "keydown",
+  function(event){
+
+    const target =
+      event.target;
+
+    const typing =
+      target &&
+      (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT"
+      );
+
+    if(event.key === "Escape"){
+      closePreview();
+      return;
+    }
+
+    if(typing) return;
+
+    if(event.key === "ArrowRight"){
+      nextMedia();
+    }
+
+    if(event.key === "ArrowLeft"){
+      previousMedia();
+    }
+
+  }
+);
+
+document.getElementById(
+  "preview"
+).addEventListener(
+  "click",
+  function(event){
+
+    if(event.target === this){
+      closePreview();
+    }
+
+  }
+);
+
+document
+  .querySelectorAll(".file-row")
+  .forEach(row => {
+
+    row.addEventListener(
+      "keydown",
+      function(event){
+
+        if(event.key === "Enter"){
+
+          event.preventDefault();
+          openItem(row);
+
+        }
+
+        if(
+          event.key.toLowerCase() === "p"
+        ){
+
+          event.preventDefault();
+
+          if(row.dataset.previewUrl){
+            showPreview(row);
+          }
+
+        }
+
+      }
+    );
+
+  });
+
+loadTheme();
+restoreStars();
+setupLazyLoading();
+</script>
+
+</body>
+</html>
